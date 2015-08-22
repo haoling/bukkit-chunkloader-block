@@ -111,6 +111,11 @@ events.playerInteract(function (event) {
 
   loader.active = true;
   loader.count = ADD_COUNT_PER_ITEM;
+  if (itemStack.getAmount() > 1) {
+    itemStack.setAmount(itemStack.getAmount() - 1);
+  } else {
+    event.player.setItemInHand(null);
+  }
   save(store);
 
   var npcName = "チャンクローダー/%s,%d,%d,%d".sprintf(
@@ -173,6 +178,26 @@ events.blockBreak(function (event) {
   save(store);
 });
 
+events.chunkUnload(function (event) {
+  var store = load();
+  var cx = event.chunk.getX();
+  var cz = event.chunk.getZ();
+  //console.log("chunk: %d,%d".sprintf(cx, cz));
+  for (var loc in store.list) {
+    if (! store.list[loc].active) continue;
+    var loader = store.list[loc];
+    var lcx = Math.floor(loader.location.x / 16);
+    var lcz = Math.floor(loader.location.z / 16);
+    if (cx < lcx - 1) continue;
+    if (lcx + 1 < cx) continue;
+    if (cz < lcz - 1) continue;
+    if (lcz + 1 < cz) continue;
+
+    event.setCancelled(true);
+    //console.log("loader: %d,%d".sprintf(lcx, lcz));
+    return;
+  }
+});
 
 setInterval(function () {
   var store = load();
